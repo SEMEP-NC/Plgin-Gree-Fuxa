@@ -1,21 +1,17 @@
 const ModbusRTU = require("modbus-serial");
-const client = new ModbusRTU();
+let client = null;
 
-async function connectGateway(ip, port = 502) {
+async function connectGateway(ip, port=5020) {
+    client = new ModbusRTU();
     await client.connectTCP(ip, { port });
-    client.setID(1); // ID passerelle
-    console.log("Connecté à la passerelle Gree:", ip);
+    client.setID(1);
+    console.log(`Connected to Gree gateway at ${ip}:${port}`);
 }
 
-async function readBits(addressStart, length) {
-    try {
-        const res = await client.readCoils(addressStart, length);
-        return res.data; // tableau de booléens
-    } catch (err) {
-        console.error("Erreur lecture bits :", err);
-        return [];
-    }
+async function readBits(start, length) {
+    if (!client) throw new Error("Gateway not connected");
+    const data = await client.readCoils(start, length);
+    return data.data;
 }
 
-// Exposition API interne
 module.exports = { connectGateway, readBits };
