@@ -1,28 +1,51 @@
-async function scanGree() {
-    const ip = document.getElementById("ip_input").value;
-    await fetch('http://localhost:3001/plugins/gree/setIP', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ ip })
+container.innerHTML = "";
+
+// Fonction pour cr  er un tableau   ditable
+const createTable = (units, type) => {
+    const table = document.createElement("table");
+    const header = table.insertRow();
+    header.innerHTML = `<th>Type</th><th>ID</th><th>Nom    saisir</th>`;
+    units.forEach((id) => {
+        const row = table.insertRow();
+        row.innerHTML = `
+            <td>${type}</td>
+            <td>${id}</td>
+            <td><input type="text" placeholder="Nom de l'unit  " data-type="${type}" data-id="${id}"></td>
+        `;
     });
+    return table;
+}
 
-    const res = await fetch('http://localhost:3001/plugins/gree/scan');
-    const data = await res.json();
+container.appendChild(createTable(detectedUnits.extUnits, "Exterieure"));
+container.appendChild(createTable(detectedUnits.intUnits, "Interieure"));
 
-    const container = document.getElementById("units_container");
-    container.innerHTML = "";
+// Activer le bouton Export JSON
+document.getElementById("importBtn").disabled = false;
+document.getElementById("importBtn").innerText = "Exporter JSON pour FUXA";
 
-    data.extUnits.forEach(u=>{
-        const div = document.createElement("div");
-        div.textContent = u + " (Ext)";
-        div.style.color="blue";
-        container.appendChild(div);
-    });
+// Nouvelle fonction : export JSON t  l  chargeable
+async function importUnits() {
+    const inputs = document.querySelectorAll("#unitsContainer input");
+    let unitsToExport = [];
 
-    data.intUnits.forEach(u=>{
-        const div = document.createElement("div");
-        div.textContent = u + " (Int)";
-        div.style.color="green";
-        container.appendChild(div);
-    });
+    for (let input of inputs) {
+        const name = input.value.trim();
+        if (!name) return alert("Merci de remplir tous les noms avant l'export");
+        unitsToExport.push({
+            type: input.dataset.type,
+            id: input.dataset.id,
+            name
+        });
+    }
+
+    // G  n  rer le fichier JSON et le d  clencher en t  l  chargement
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(unitsToExport, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", "gree_units.json");
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+
+    alert("Fichier JSON g  n  r  , vous pouvez maintenant l'importer dans FUXA");
 }
