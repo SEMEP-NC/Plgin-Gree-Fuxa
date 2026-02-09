@@ -4,25 +4,55 @@
     <meta charset="UTF-8">
     <title>Gree Modbus Plugin</title>
     <style>
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background-color: #f0f0f0; }
-        input { width: 90%; }
-        button { margin-top: 10px; padding: 8px 12px; }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        input {
+            width: 90%;
+        }
+        button {
+            margin-top: 10px;
+            padding: 8px 12px;
+        }
+
+        /* Zone d'erreurs */
+        #errorBox {
+            display: none;
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #b00020;
+            background-color: #ffecec;
+            color: #b00020;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <h2>Gree  ^`^s Auto d  tection Modbus</h2>
 
-    <input id="ip" placeholder="IP passerelle Gree">
-    <button onclick="scan()">Scanner</button>
+<h2>Gree  ^`^s Auto d  tection Modbus</h2>
 
-    <h3>Unit  s d  tect  es</h3>
-    <div id="unitsContainer"></div>
+<input id="ip" placeholder="IP passerelle Gree">
+<button onclick="scan()">Scanner</button>
 
-    <!-- Bouton pour g  n  rer le JSON t  l  chargeable -->
-    <button id="importBtn" onclick="importUnits()" disabled>Exporter JSON pour FUXA</button>
+<div id="errorBox"></div>
 
-    <script src="widget_gree.js"></script>
+<h3>Unit  s d  tect  es</h3>
+<div id="unitsContainer"></div>
+
+<button id="importBtn" onclick="importUnits()" disabled>
+    Exporter JSON pour FUXA
+</button>
+
+<script src="widget_gree.js"></script>
 </body>
 </html>
+
