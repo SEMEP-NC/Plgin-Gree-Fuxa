@@ -1,7 +1,0 @@
-{
-  "defaultPort": 502,
-  "scanExtStart": 88,
-  "scanExtLength": 16,
-  "scanIntStart": 120,
-  "scanIntLength": 128
-}
