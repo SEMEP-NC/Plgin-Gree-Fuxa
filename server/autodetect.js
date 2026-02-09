@@ -1,8 +1,7 @@
 const { readBits } = require("./driver_gree");
-const greeConfig = require("../config/gree_config.json");
 
 /**
- * Lit des blocs pour eviter l'erreur "Data length error"
+ * Lit des blocs pour   viter l'erreur "Data length error"
  */
 async function readInChunks(start, length, ip, port, chunkSize = 32) {
     let result = [];
@@ -15,7 +14,7 @@ async function readInChunks(start, length, ip, port, chunkSize = 32) {
             const data = await readBits(offset, size, ip, port);
             result = result.concat(data);
         } catch (err) {
-            console.error(`Erreur lecture Modbus a ${offset}, taille ${size}: ${err.message}`);
+            console.error(`Erreur lecture Modbus    ${offset}, taille ${size}: ${err.message}`);
         }
         offset += size;
         remaining -= size;
@@ -25,26 +24,17 @@ async function readInChunks(start, length, ip, port, chunkSize = 32) {
 }
 
 /**
- * Scanne toutes les unites detectables
+ * Scanne toutes les unit  s d  tectables
  */
 async function scanUnits(ip, port) {
-    const extBits = await readInChunks(
-        greeConfig.scanExtStart,
-        greeConfig.scanExtLength,
-        ip,
-        port
-    );
-    const intBits = await readInChunks(
-        greeConfig.scanIntStart,
-        greeConfig.scanIntLength,
-        ip,
-        port
-    );
+    const extBits = await readInChunks(88, 16, ip, port);       // unit  s ext  rieures
+    const intBits = await readInChunks(120, 128, ip, port);     // unit  s int  rieures
 
-    const extUnits = extBits.map((b, i) => (b ? `ExtUnit_${i + 1}` : null)).filter(Boolean);
-    const intUnits = intBits.map((b, i) => (b ? `IntUnit_${i + 1}` : null)).filter(Boolean);
+    const extUnits = extBits.map((b,i)=>b?`ExtUnit_${i+1}`:null).filter(Boolean);
+    const intUnits = intBits.map((b,i)=>b?`IntUnit_${i+1}`:null).filter(Boolean);
 
     return { extUnits, intUnits };
 }
 
 module.exports = { scanUnits };
+
