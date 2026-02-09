@@ -1,6 +1,28 @@
-<div>
-  <input id="ip_input" placeholder="IP passerelle Gree"/>
-  <button onclick="scanGree()">Scan</button>
-</div>
-<div id="units_container"></div>
-<script src="widget_gree.js"></script>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gree Modbus Plugin</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f0f0f0; }
+        input { width: 90%; }
+        button { margin-top: 10px; padding: 8px 12px; }
+    </style>
+</head>
+<body>
+    <h2>Gree  ^`^s Auto d  tection Modbus</h2>
+
+    <input id="ip" placeholder="IP passerelle Gree">
+    <button onclick="scan()">Scanner</button>
+
+    <h3>Unit  s d  tect  es</h3>
+    <div id="unitsContainer"></div>
+
+    <!-- Bouton pour g  n  rer le JSON t  l  chargeable -->
+    <button id="importBtn" onclick="importUnits()" disabled>Exporter JSON pour FUXA</button>
+
+    <script src="widget_gree.js"></script>
+</body>
+</html>
