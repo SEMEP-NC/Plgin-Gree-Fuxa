@@ -40,19 +40,25 @@ tr:nth-child(even) { background-color:#fafafa; }
     <h3>Unités détectées</h3>
     <div id="unitsContainer"></div>
     <div class="actions">
-        <button id="exportAllBtn" disabled>Exporter tout (Gree + Vue FUXA)</button>
+        <button id="exportGreeBtn" disabled>Exporter JSON Gree</button>
+        <button id="exportFuxaBtn" disabled>Exporter Vue FUXA</button>
     </div>
 </div>
 
 <script src="widget_gree.js"></script>
 <script>
 document.getElementById("scanBtn").addEventListener("click", scan);
-document.getElementById("exportAllBtn").addEventListener("click", async () => {
+document.getElementById("exportGreeBtn").addEventListener("click", async () => {
     try {
         const { intUnits, extUnits } = getUnitsFromTable();
         await exportGreeJSON(intUnits, extUnits);
+    } catch (err) { showError(err.message); }
+});
+document.getElementById("exportFuxaBtn").addEventListener("click", () => {
+    try {
+        const { intUnits, extUnits } = getUnitsFromTable();
         exportFuxaJSON(intUnits, extUnits);
-    } catch(err){ showError(err.message); }
+    } catch (err) { showError(err.message); }
 });
 </script>
 
