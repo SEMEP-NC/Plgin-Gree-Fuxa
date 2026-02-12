@@ -1,8 +1,9 @@
 diff --git a/client/widget_gree.html b/client/widget_gree.html
-index 321d57a7bab21db668233fa2ac8b597bcaf22be0..8e8d61de343bbc66e7699ef1a4f64ac6b96ecb1d 100644
+index 321d57a7bab21db668233fa2ac8b597bcaf22be0..f9810c6d872e75ea1b4c7656995ae781867d08f3 100644
 --- a/client/widget_gree.html
 +++ b/client/widget_gree.html
-@@ -19,57 +19,57 @@ button:disabled { background-color:#9e9e9e; cursor:not-allowed; }
+@@ -18,58 +18,55 @@ button:hover { background-color:var(--primary-dark); }
+ button:disabled { background-color:#9e9e9e; cursor:not-allowed; }
  table { border-collapse:collapse; width:100%; margin-top:10px; }
  th, td { border:1px solid var(--border); padding:8px; font-size:13px; }
  th { background-color:#f0f3f8; text-align:left; }
@@ -27,31 +28,37 @@ index 321d57a7bab21db668233fa2ac8b597bcaf22be0..8e8d61de343bbc66e7699ef1a4f64ac6
      <h3>Unités détectées</h3>
      <div id="unitsContainer"></div>
      <div class="actions">
-         <button id="exportGreeBtn" disabled>Exporter JSON Gree</button>
+-        <button id="exportGreeBtn" disabled>Exporter JSON Gree</button>
 -        <button id="exportFuxaBtn" disabled>Exporter Vue FUXA</button>
-+        <button id="exportFuxaBtn" disabled>Exporter vers FUXA</button>
++        <button id="exportEquipmentsBtn" disabled>Exporter équipements scannés</button>
++        <button id="createFuxaViewBtn" disabled>Créer la vue FUXA</button>
      </div>
  </div>
  
  <script src="widget_gree.js"></script>
  <script>
  const scanBtn = document.getElementById("scanBtn");
- const exportGreeBtn = document.getElementById("exportGreeBtn");
- const exportFuxaBtn = document.getElementById("exportFuxaBtn");
+-const exportGreeBtn = document.getElementById("exportGreeBtn");
+-const exportFuxaBtn = document.getElementById("exportFuxaBtn");
++const exportEquipmentsBtn = document.getElementById("exportEquipmentsBtn");
++const createFuxaViewBtn = document.getElementById("createFuxaViewBtn");
  
- // Scanner les unités
+-// Scanner les unités
  scanBtn.addEventListener("click", scan);
  
- // Export JSON Gree
- exportGreeBtn.addEventListener("click", async () => {
+-// Export JSON Gree
+-exportGreeBtn.addEventListener("click", async () => {
++exportEquipmentsBtn.addEventListener("click", async () => {
      try {
-         const { intUnits, extUnits } = getUnitsFromTable();
+-        const { intUnits, extUnits } = getUnitsFromTable();
++        const { intUnits, extUnits } = getUnitsFromTable({ fallbackNamesById: getFallbackNamesFromLastScan() });
          await exportGreeJSON(intUnits, extUnits);
      } catch (err) { showError(err.message); }
  });
  
- // Export Vue FUXA
- exportFuxaBtn.addEventListener("click", () => {
+-// Export Vue FUXA
+-exportFuxaBtn.addEventListener("click", () => {
++createFuxaViewBtn.addEventListener("click", () => {
      try {
 -        const { intUnits, extUnits } = getUnitsFromTable();
 +        const { intUnits, extUnits } = getUnitsFromTable({ fallbackNamesById: getFallbackNamesFromLastScan() });
