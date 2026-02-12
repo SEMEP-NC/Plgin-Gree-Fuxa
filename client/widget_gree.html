@@ -1,5 +1,5 @@
 diff --git a/client/widget_gree.html b/client/widget_gree.html
-index 321d57a7bab21db668233fa2ac8b597bcaf22be0..be3b4672706499ea981abcd2e93ff6b56fc00151 100644
+index 321d57a7bab21db668233fa2ac8b597bcaf22be0..8e8d61de343bbc66e7699ef1a4f64ac6b96ecb1d 100644
 --- a/client/widget_gree.html
 +++ b/client/widget_gree.html
 @@ -19,57 +19,57 @@ button:disabled { background-color:#9e9e9e; cursor:not-allowed; }
@@ -29,7 +29,7 @@ index 321d57a7bab21db668233fa2ac8b597bcaf22be0..be3b4672706499ea981abcd2e93ff6b5
      <div class="actions">
          <button id="exportGreeBtn" disabled>Exporter JSON Gree</button>
 -        <button id="exportFuxaBtn" disabled>Exporter Vue FUXA</button>
-+        <button id="exportFuxaBtn" disabled>Exporter vue FUXA (scan Gree)</button>
++        <button id="exportFuxaBtn" disabled>Exporter vers FUXA</button>
      </div>
  </div>
  
@@ -54,7 +54,7 @@ index 321d57a7bab21db668233fa2ac8b597bcaf22be0..be3b4672706499ea981abcd2e93ff6b5
  exportFuxaBtn.addEventListener("click", () => {
      try {
 -        const { intUnits, extUnits } = getUnitsFromTable();
-+        const { intUnits, extUnits } = getUnitsFromTable({ allowEmptyNames: true });
++        const { intUnits, extUnits } = getUnitsFromTable({ fallbackNamesById: getFallbackNamesFromLastScan() });
          exportFuxaJSON(intUnits, extUnits);
      } catch (err) { showError(err.message); }
  });
