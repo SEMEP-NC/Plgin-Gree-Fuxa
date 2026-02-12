@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Gree Modbus Plugin</title>
-    <style>
-        :root { --primary:#1976d2; --primary-dark:#125aa0; --bg:#f5f7fa; --card:#ffffff; --border:#dcdfe6; --error:#b00020; }
-        * { box-sizing:border-box; font-family:"Segoe UI", Roboto, Arial, sans-serif; }
-        body { margin:0; padding:20px; background-color:var(--bg); color:#333; }
-        h2 { margin-top:0; color:var(--primary); }
-        h3 { margin-top:30px; border-bottom:2px solid var(--border); padding-bottom:5px; }
-        .card { background-color:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
-        .form-row { display:flex; gap:10px; align-items:center; }
-        input[type="text"] { flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:4px; font-size:14px; }
-        input[type="text"]:focus { outline:none; border-color:var(--primary); }
-        button { padding:8px 14px; font-size:14px; border-radius:4px; border:none; cursor:pointer; background-color:var(--primary); color:white; transition:background-color 0.2s; }
-        button:hover { background-color:var(--primary-dark); }
-        button:disabled { background-color:#9e9e9e; cursor:not-allowed; }
-        table { border-collapse:collapse; width:100%; margin-top:10px; }
-        th, td { border:1px solid var(--border); padding:8px; font-size:13px; }
-        th { background-color:#f0f3f8; text-align:left; }
-        tr:nth-child(even) { background-color:#fafafa; }
-        #errorBox { display:none; margin-top:10px; padding:10px; border:1px solid var(--error); background-color:#ffecec; color:var(--error); font-weight:600; border-radius:4px; }
-        .actions { margin-top:20px; display:flex; gap:10px; justify-content:flex-end; }
-    </style>
+<meta charset="UTF-8">
+<title>Gree Modbus Plugin</title>
+<style>
+:root { --primary:#1976d2; --primary-dark:#125aa0; --bg:#f5f7fa; --card:#ffffff; --border:#dcdfe6; --error:#b00020; }
+* { box-sizing:border-box; font-family:"Segoe UI", Roboto, Arial, sans-serif; }
+body { margin:0; padding:20px; background-color:var(--bg); color:#333; }
+h2 { margin-top:0; color:var(--primary); }
+h3 { margin-top:30px; border-bottom:2px solid var(--border); padding-bottom:5px; }
+.card { background-color:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
+.form-row { display:flex; gap:10px; align-items:center; }
+input[type="text"] { flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:4px; font-size:14px; }
+input[type="text"]:focus { outline:none; border-color:var(--primary); }
+button { padding:8px 14px; font-size:14px; border-radius:4px; border:none; cursor:pointer; background-color:var(--primary); color:white; transition:background-color 0.2s; }
+button:hover { background-color:var(--primary-dark); }
+button:disabled { background-color:#9e9e9e; cursor:not-allowed; }
+table { border-collapse:collapse; width:100%; margin-top:10px; }
+th, td { border:1px solid var(--border); padding:8px; font-size:13px; }
+th { background-color:#f0f3f8; text-align:left; }
+tr:nth-child(even) { background-color:#fafafa; }
+#errorBox { display:none; margin-top:10px; padding:10px; border:1px solid var(--error); background-color:#ffecec; color:var(--error); font-weight:600; border-radius:4px; }
+.actions { margin-top:20px; display:flex; gap:10px; justify-content:flex-end; }
+</style>
 </head>
 <body>
 
@@ -40,26 +40,20 @@
     <h3>Unités détectées</h3>
     <div id="unitsContainer"></div>
     <div class="actions">
-        <button id="exportGreeBtn" disabled>Exporter JSON Gree</button>
-        <button id="exportFuxaBtn" disabled>Exporter Vue FUXA</button>
+        <button id="exportAllBtn" disabled>Exporter tout (Gree + Vue FUXA)</button>
     </div>
 </div>
 
 <script src="widget_gree.js"></script>
 <script>
-    document.getElementById("scanBtn").addEventListener("click", scan);
-    document.getElementById("exportGreeBtn").addEventListener("click", () => {
-        try {
-            const { intUnits, extUnits } = getUnitsFromTable();
-            exportGreeJSON(intUnits, extUnits);
-        } catch (err) { showError(err.message); }
-    });
-    document.getElementById("exportFuxaBtn").addEventListener("click", () => {
-        try {
-            const { intUnits, extUnits } = getUnitsFromTable();
-            exportFuxaJSON(intUnits, extUnits);
-        } catch (err) { showError(err.message); }
-    });
+document.getElementById("scanBtn").addEventListener("click", scan);
+document.getElementById("exportAllBtn").addEventListener("click", async () => {
+    try {
+        const { intUnits, extUnits } = getUnitsFromTable();
+        await exportGreeJSON(intUnits, extUnits);
+        exportFuxaJSON(intUnits, extUnits);
+    } catch(err){ showError(err.message); }
+});
 </script>
 
 </body>
