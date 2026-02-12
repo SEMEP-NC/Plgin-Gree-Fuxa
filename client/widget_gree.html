@@ -47,14 +47,23 @@ tr:nth-child(even) { background-color:#fafafa; }
 
 <script src="widget_gree.js"></script>
 <script>
-document.getElementById("scanBtn").addEventListener("click", scan);
-document.getElementById("exportGreeBtn").addEventListener("click", async () => {
+const scanBtn = document.getElementById("scanBtn");
+const exportGreeBtn = document.getElementById("exportGreeBtn");
+const exportFuxaBtn = document.getElementById("exportFuxaBtn");
+
+// Scanner les unités
+scanBtn.addEventListener("click", scan);
+
+// Export JSON Gree
+exportGreeBtn.addEventListener("click", async () => {
     try {
         const { intUnits, extUnits } = getUnitsFromTable();
         await exportGreeJSON(intUnits, extUnits);
     } catch (err) { showError(err.message); }
 });
-document.getElementById("exportFuxaBtn").addEventListener("click", () => {
+
+// Export Vue FUXA
+exportFuxaBtn.addEventListener("click", () => {
     try {
         const { intUnits, extUnits } = getUnitsFromTable();
         exportFuxaJSON(intUnits, extUnits);
