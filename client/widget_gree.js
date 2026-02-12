@@ -1,8 +1,8 @@
 diff --git a/client/widget_gree.js b/client/widget_gree.js
-index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..2ae70c66061daed96335ddf4e27686a047d24dbb 100644
+index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..4e12816bd2468ede8bf2aa9c4841f54d3ddb165a 100644
 --- a/client/widget_gree.js
 +++ b/client/widget_gree.js
-@@ -1,109 +1,114 @@
+@@ -1,89 +1,117 @@
  const container = document.getElementById("unitsContainer");
  const errorBox = document.getElementById("errorBox");
  const API_BASE = "/plugins/gree";
@@ -16,7 +16,8 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..2ae70c66061daed96335ddf4e27686a0
      if(!Array.isArray(units)||units.length===0) return null;
      const table=document.createElement("table");
      const header=table.insertRow();
-     header.innerHTML = type==="Interieure"? 
+-    header.innerHTML = type==="Interieure"? 
++    header.innerHTML = type==="Interieure"?
          `<th>Type</th><th>Adresse</th><th>Puissance (kW)</th><th>Nom à saisir</th>` :
          `<th>Type</th><th>Adresse</th><th>Nom à saisir</th>`;
      units.forEach(u=>{
@@ -37,12 +38,38 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..2ae70c66061daed96335ddf4e27686a0
  function displayUnits(detectedUnits){
      clearError();
      container.innerHTML="";
-     if(!detectedUnits){ showError("Aucune donnée reçue"); return; }
+-    if(!detectedUnits){ showError("Aucune donnée reçue"); return; }
+-    container.appendChild(createTable(detectedUnits.extUnits,"Exterieure"));
+-    container.appendChild(createTable(detectedUnits.intUnits,"Interieure"));
+-    document.getElementById("exportGreeBtn").disabled=false;
+-    document.getElementById("exportFuxaBtn").disabled=false;
++    if(!detectedUnits){
++        latestDetectedUnits = null;
++        showError("Aucune donnée reçue");
++        return;
++    }
++
 +    latestDetectedUnits = detectedUnits;
-     container.appendChild(createTable(detectedUnits.extUnits,"Exterieure"));
-     container.appendChild(createTable(detectedUnits.intUnits,"Interieure"));
-     document.getElementById("exportGreeBtn").disabled=false;
-     document.getElementById("exportFuxaBtn").disabled=false;
++    const extTable = createTable(detectedUnits.extUnits,"Exterieure");
++    const intTable = createTable(detectedUnits.intUnits,"Interieure");
++
++    if(extTable) container.appendChild(extTable);
++    if(intTable) container.appendChild(intTable);
++
++    const hasUnits = Boolean(extTable || intTable);
++    document.getElementById("exportGreeBtn").disabled=!hasUnits;
++    document.getElementById("exportFuxaBtn").disabled=!hasUnits;
++
++    if(!hasUnits) showError("Aucune unité détectée après le scan Gree");
++}
++
++function getFallbackNamesFromLastScan(){
++    if(!latestDetectedUnits) return {};
++    const allUnits = [...(latestDetectedUnits.extUnits || []), ...(latestDetectedUnits.intUnits || [])];
++    return allUnits.reduce((acc, unit) => {
++        acc[unit.id] = unit.name;
++        return acc;
++    }, {});
  }
  
  // Scan Modbus
@@ -50,6 +77,10 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..2ae70c66061daed96335ddf4e27686a0
      try{
          clearError();
          container.innerHTML="";
++        latestDetectedUnits = null;
++        document.getElementById("exportGreeBtn").disabled=true;
++        document.getElementById("exportFuxaBtn").disabled=true;
++
          const ip=document.getElementById("ip").value.trim();
          if(!ip) throw new Error("Veuillez saisir l'adresse IP de la passerelle Gree");
          const setIpResp = await fetch(`${API_BASE}/set-ip`,{
@@ -64,13 +95,14 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..2ae70c66061daed96335ddf4e27686a0
  
  // Récupère les unités depuis le tableau
 -function getUnitsFromTable(){
-+function getUnitsFromTable({ allowEmptyNames = false } = {}){
++function getUnitsFromTable({ fallbackNamesById = {} } = {}){
      const inputs=document.querySelectorAll("#unitsContainer input");
      if(!inputs.length) throw new Error("Aucune unité à exporter");
      const intUnits=[], extUnits=[];
      inputs.forEach(i=>{
 -        const name=i.value.trim();
-+        const name=i.value.trim() || (allowEmptyNames ? `Unité ${i.dataset.id}` : "");
++        const fallbackName = fallbackNamesById[i.dataset.id] || "";
++        const name=i.value.trim() || fallbackName;
          if(!name) throw new Error(`Nom manquant pour l'unité ${i.dataset.id} (${i.dataset.type})`);
          const unit={ id:i.dataset.id, name };
          if(i.dataset.type==="Interieure") intUnits.push(unit);
@@ -91,31 +123,8 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..2ae70c66061daed96335ddf4e27686a0
  
  // Export Vue FUXA
  function exportFuxaJSON(intUnits, extUnits){
-+    if(!latestDetectedUnits){
-+        throw new Error("Veuillez lancer un scan Gree avant d'exporter la vue FUXA");
-+    }
      const viewId = `v_${crypto.randomUUID()}`;
      const tableId = `OXC_${crypto.randomUUID()}`;
      const allUnits = [...intUnits,...extUnits];
      const rows = allUnits.map(u=>({
          cells:[
-             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:u.name},
-             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"Off"},
-             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"N/A"},
-             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"N/A"},
-             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"N/A"},
-             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"OK"}
-         ]
-     }));
- 
-     const viewJson={
-         id:viewId,
-         name:"Tableau Equipements",
-         profile:{width:1920,height:1080,bkcolor:"#ffffffff",margin:10,align:"middleCenter",gridType:"fixed",viewRenderDelay:0},
-         items:{ [tableId]:{ id:tableId, type:"svg-ext-own_ctrl-table", name:"Equipements", property:{ id:null, type:"data", options:{ rows } }, events:[] } },
-         variables:{}, svgcontent:""
-     };
- 
-     const blob = new Blob([JSON.stringify(viewJson,null,2)],{type:"application/json"});
-     downloadBlob(blob,"fuxa_view.json");
- }
