@@ -8,7 +8,6 @@ function showError(message) {
     errorBox.style.display = "block";
     setTimeout(() => clearError(), 5000);
 }
-
 function clearError() {
     errorBox.innerText = "";
     errorBox.style.display = "none";
@@ -22,7 +21,6 @@ function createTable(units, type) {
     header.innerHTML = type === "Interieure" ?
         `<th>Type</th><th>Adresse</th><th>Puissance (kW)</th><th>Nom à saisir</th>` :
         `<th>Type</th><th>Adresse</th><th>Nom à saisir</th>`;
-
     units.forEach(u => {
         const row = table.insertRow();
         const power = u.power ?? "-";
@@ -105,10 +103,61 @@ async function exportGreeJSON(intUnits, extUnits) {
 function exportFuxaJSON(intUnits, extUnits) {
     const viewId = `v_${crypto.randomUUID()}`;
     const tableId = `OXC_${crypto.randomUUID()}`;
-    const allUnits = [...intUnits,...extUnits];
+    const allUnits = [...intUnits, ...extUnits];
     const rows = allUnits.map(u => ({
         cells:[
             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:u.name},
             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"Off"},
             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"N/A"},
-            {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`,
+            {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"N/A"},
+            {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"N/A"},
+            {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"OK"}
+        ]
+    }));
+
+    const viewJson = {
+        id:viewId,
+        name:"Tableau Equipements",
+        profile:{width:1920,height:1080,bkcolor:"#ffffffff",margin:10,align:"middleCenter",gridType:"fixed",viewRenderDelay:0},
+        items:{
+            [tableId]:{
+                id:tableId,
+                type:"svg-ext-own_ctrl-table",
+                name:"Equipements",
+                property:{
+                    id:null,
+                    type:"data",
+                    options:{
+                        paginator:{show:false},
+                        filter:{show:false},
+                        daterange:{show:false},
+                        realtime:false,
+                        lastRange:"last1h",
+                        gridColor:"#E0E0E0",
+                        header:{show:true,height:30,fontSize:12,background:"#F0F0F0",color:"#757575"},
+                        row:{height:30,fontSize:10,background:"#F9F9F9",color:"#000000"},
+                        selection:{background:"#3059AF",color:"#FFFFFF",fontBold:true},
+                        columns:[
+                            {id:`c_${crypto.randomUUID()}`, label:"Equipements", type:"label", align:"center", width:100},
+                            {id:`c_${crypto.randomUUID()}`, label:"Etat", type:"label", align:"center", width:80},
+                            {id:`c_${crypto.randomUUID()}`, label:"Consigne", type:"label", align:"center", width:100},
+                            {id:`c_${crypto.randomUUID()}`, label:"Temp. Ambiante", type:"label", align:"center", width:100},
+                            {id:`c_${crypto.randomUUID()}`, label:"Ventilation", type:"label", align:"center", width:100},
+                            {id:`c_${crypto.randomUUID()}`, label:"Défaut", type:"label", align:"center", width:20}
+                        ],
+                        rows: rows
+                    }
+                },
+                events:[]
+            }
+        },
+        variables:{},
+        svgcontent:""
+    };
+
+    const blob = new Blob([JSON.stringify(viewJson, null, 2)], {type:"application/json"});
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download="fuxa_view.json"; document.body.appendChild(a); a.click(); a.remove();
+    window.URL.revokeObjectURL(url);
+}
