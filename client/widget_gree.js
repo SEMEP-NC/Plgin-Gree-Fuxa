@@ -2,7 +2,6 @@ const container = document.getElementById("unitsContainer");
 const importBtn = document.getElementById("importBtn");
 const ipInput = document.getElementById("ip");
 const errorBox = document.getElementById("errorBox");
-
 const API_BASE = "/plugins/gree";
 
 /* ==========================
@@ -24,45 +23,28 @@ function clearError() {
 ========================== */
 function createTable(units, type) {
     if (!Array.isArray(units) || units.length === 0) return null;
-
     const table = document.createElement("table");
     table.classList.add("unit-table");
 
     const header = table.insertRow();
-    if (type === "Interieure") {
-        header.innerHTML = `<th>Type</th><th>Adresse</th><th>Puissance (kW)</th><th>Nom à saisir</th>`;
-    } else {
-        header.innerHTML = `<th>Type</th><th>Adresse</th><th>Nom à saisir</th>`;
-    }
+    header.innerHTML = type === "Interieure" ?
+        `<th>Type</th><th>Adresse</th><th>Puissance (kW)</th><th>Nom à saisir</th>` :
+        `<th>Type</th><th>Adresse</th><th>Nom à saisir</th>`;
 
-    units.forEach((unit) => {
+    units.forEach(unit => {
         const row = table.insertRow();
-        const address = unit.address;
         const power = unit.power ?? "-";
-
         if (type === "Interieure") {
             row.innerHTML = `
                 <td>${type}</td>
-                <td>${address}</td>
-                <td>${power !== "-" ? (power / 10).toFixed(1) + " kW" : "-"}</td>
-                <td>
-                    <input type="text"
-                           placeholder="Nom de l'unité"
-                           data-type="${type}"
-                           data-id="${unit.id}"
-                           data-address="${address}">
-                </td>`;
+                <td>${unit.address}</td>
+                <td>${power !== "-" ? (power/10).toFixed(1)+" kW" : "-"}</td>
+                <td><input type="text" placeholder="Nom de l'unité" data-type="${type}" data-id="${unit.id}" data-address="${unit.address}"></td>`;
         } else {
             row.innerHTML = `
                 <td>${type}</td>
-                <td>${address}</td>
-                <td>
-                    <input type="text"
-                           placeholder="Nom de l'unité"
-                           data-type="${type}"
-                           data-id="${unit.id}"
-                           data-address="${address}">
-                </td>`;
+                <td>${unit.address}</td>
+                <td><input type="text" placeholder="Nom de l'unité" data-type="${type}" data-id="${unit.id}" data-address="${unit.address}"></td>`;
         }
     });
 
@@ -108,17 +90,10 @@ async function scan() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ip })
         });
-
-        if (!setIpResp.ok) {
-            const err = await setIpResp.json();
-            throw new Error(err.error || "Erreur configuration IP");
-        }
+        if (!setIpResp.ok) throw new Error((await setIpResp.json()).error || "Erreur configuration IP");
 
         const scanResp = await fetch(`${API_BASE}/scan`);
-        if (!scanResp.ok) {
-            const err = await scanResp.json();
-            throw new Error(err.error || "Erreur scan Modbus");
-        }
+        if (!scanResp.ok) throw new Error((await scanResp.json()).error || "Erreur scan Modbus");
 
         const detectedUnits = await scanResp.json();
         displayUnits(detectedUnits);
@@ -135,38 +110,31 @@ async function scan() {
 async function importAndExport() {
     try {
         clearError();
-
         const inputs = document.querySelectorAll("#unitsContainer input");
         if (!inputs.length) throw new Error("Aucune unité à exporter");
 
         const intUnits = [];
         const extUnits = [];
 
-        for (let input of inputs) {
+        inputs.forEach(input => {
             const name = input.value.trim();
             if (!name) {
                 input.style.border = "2px solid #b00020";
                 throw new Error(`Nom manquant pour l'unité ${input.dataset.id} (${input.dataset.type})`);
-            } else {
-                input.style.border = "";
-            }
+            } else input.style.border = "";
 
             const unit = { id: input.dataset.id, name };
             if (input.dataset.type === "Interieure") intUnits.push(unit);
             else if (input.dataset.type === "Exterieure") extUnits.push(unit);
-        }
+        });
 
-        // ---- Export JSON Gree ----
+        // Export JSON Gree
         const greeResp = await fetch("/plugins/gree/export", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ intUnits, extUnits })
         });
-
-        if (!greeResp.ok) {
-            const err = await greeResp.json();
-            throw new Error(err.error || "Erreur lors de l'export Gree");
-        }
+        if (!greeResp.ok) throw new Error((await greeResp.json()).error || "Erreur lors de l'export Gree");
 
         const greeBlob = await greeResp.blob();
         const greeUrl = window.URL.createObjectURL(greeBlob);
@@ -178,7 +146,7 @@ async function importAndExport() {
         a1.remove();
         window.URL.revokeObjectURL(greeUrl);
 
-        // ---- Export Vue FUXA ----
+        // Export Vue FUXA
         exportFuxaView(intUnits, extUnits);
 
     } catch (err) {
@@ -193,74 +161,11 @@ async function importAndExport() {
 function exportFuxaView(intUnits, extUnits) {
     const viewId = `v_${crypto.randomUUID()}`;
     const tableId = `OXC_${crypto.randomUUID()}`;
-
     const allUnits = [...intUnits, ...extUnits];
+
     const rows = allUnits.map(unit => ({
         cells: [
             { id: `c_${crypto.randomUUID()}`, type: "variable", variableId: `t_${crypto.randomUUID()}`, label: unit.name },
             { id: `c_${crypto.randomUUID()}`, type: "variable", variableId: `t_${crypto.randomUUID()}`, label: "Off" },
             { id: `c_${crypto.randomUUID()}`, type: "variable", variableId: `t_${crypto.randomUUID()}`, label: "N/A" },
-            { id: `c_${crypto.randomUUID()}`, type: "variable", variableId: `t_${crypto.randomUUID()}`, label: "N/A" },
-            { id: `c_${crypto.randomUUID()}`, type: "variable", variableId: `t_${crypto.randomUUID()}`, label: "N/A" },
-            { id: `c_${crypto.randomUUID()}`, type: "variable", variableId: `t_${crypto.randomUUID()}`, label: "OK" }
-        ]
-    }));
-
-    const viewJson = {
-        id: viewId,
-        name: "Tableau Equipements",
-        profile: { width: 1920, height: 1080, bkcolor: "#ffffffff", margin: 10, align: "middleCenter", gridType: "fixed", viewRenderDelay: 0 },
-        items: {
-            [tableId]: {
-                id: tableId,
-                type: "svg-ext-own_ctrl-table",
-                name: "Equipements",
-                property: {
-                    id: null,
-                    type: "data",
-                    options: {
-                        paginator: { show: false },
-                        filter: { show: false },
-                        daterange: { show: false },
-                        realtime: false,
-                        lastRange: "last1h",
-                        gridColor: "#E0E0E0",
-                        header: { show: true, height: 30, fontSize: 12, background: "#F0F0F0", color: "#757575" },
-                        row: { height: 30, fontSize: 10, background: "#F9F9F9", color: "#000000" },
-                        selection: { background: "#3059AF", color: "#FFFFFF", fontBold: true },
-                        columns: [
-                            { id: `c_${crypto.randomUUID()}`, label: "Equipements", type: "label", align: "center", width: 100 },
-                            { id: `c_${crypto.randomUUID()}`, label: "Etat", type: "label", align: "center", width: 80 },
-                            { id: `c_${crypto.randomUUID()}`, label: "Consigne", type: "label", align: "center", width: 100 },
-                            { id: `c_${crypto.randomUUID()}`, label: "Temp. Ambiante", type: "label", align: "center", width: 100 },
-                            { id: `c_${crypto.randomUUID()}`, label: "Ventilation", type: "label", align: "center", width: 100 },
-                            { id: `c_${crypto.randomUUID()}`, label: "Défaut", type: "label", align: "center", width: 20 }
-                        ],
-                        rows: rows
-                    }
-                },
-                events: []
-            }
-        },
-        variables: {},
-        svgcontent: ""
-    };
-
-    const blob = new Blob([JSON.stringify(viewJson, null, 2)], { type: "application/json" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "fuxa_view.json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-
-    console.log("Vue FUXA exportée avec succès !");
-}
-
-/* ==========================
-   Événements boutons
-========================== */
-document.getElementById("scanBtn").addEventListener("click", scan);
-importBtn.addEventListener("click", importAndExport);
+            { id: `c_${crypto.randomUUID()_
