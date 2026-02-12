@@ -1,8 +1,8 @@
 diff --git a/client/widget_gree.js b/client/widget_gree.js
-index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..4e12816bd2468ede8bf2aa9c4841f54d3ddb165a 100644
+index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..77cbbf35523ce82385175c9724212b3cb9e86a9a 100644
 --- a/client/widget_gree.js
 +++ b/client/widget_gree.js
-@@ -1,89 +1,117 @@
+@@ -1,120 +1,144 @@
  const container = document.getElementById("unitsContainer");
  const errorBox = document.getElementById("errorBox");
  const API_BASE = "/plugins/gree";
@@ -11,7 +11,7 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..4e12816bd2468ede8bf2aa9c4841f54d
  function showError(msg){ errorBox.innerText=msg; errorBox.style.display="block"; setTimeout(clearError,5000);}
  function clearError(){ errorBox.innerText=""; errorBox.style.display="none";}
  
- // Crée un tableau des unités
+-// Crée un tableau des unités
  function createTable(units,type){
      if(!Array.isArray(units)||units.length===0) return null;
      const table=document.createElement("table");
@@ -25,16 +25,18 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..4e12816bd2468ede8bf2aa9c4841f54d
          const power = u.power ?? "-";
          if(type==="Interieure"){
              row.innerHTML=`<td>${type}</td><td>${u.address}</td><td>${power!="-"? (power/10).toFixed(1)+" kW":"-"}</td>
-             <td><input type="text" data-type="${type}" data-id="${u.id}" data-address="${u.address}" placeholder="Nom de l'unité"></td>`;
+-            <td><input type="text" data-type="${type}" data-id="${u.id}" data-address="${u.address}" placeholder="Nom de l'unité"></td>`;
++            <td><input type="text" data-type="${type}" data-id="${u.id}" data-address="${u.address}" placeholder="Nom de l'unité" value="${u.name || ""}"></td>`;
          }else{
              row.innerHTML=`<td>${type}</td><td>${u.address}</td>
-             <td><input type="text" data-type="${type}" data-id="${u.id}" data-address="${u.address}" placeholder="Nom de l'unité"></td>`;
+-            <td><input type="text" data-type="${type}" data-id="${u.id}" data-address="${u.address}" placeholder="Nom de l'unité"></td>`;
++            <td><input type="text" data-type="${type}" data-id="${u.id}" data-address="${u.address}" placeholder="Nom de l'unité" value="${u.name || ""}"></td>`;
          }
      });
      return table;
  }
  
- // Affiche les unités et active les boutons
+-// Affiche les unités et active les boutons
  function displayUnits(detectedUnits){
      clearError();
      container.innerHTML="";
@@ -52,13 +54,12 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..4e12816bd2468ede8bf2aa9c4841f54d
 +    latestDetectedUnits = detectedUnits;
 +    const extTable = createTable(detectedUnits.extUnits,"Exterieure");
 +    const intTable = createTable(detectedUnits.intUnits,"Interieure");
-+
 +    if(extTable) container.appendChild(extTable);
 +    if(intTable) container.appendChild(intTable);
 +
 +    const hasUnits = Boolean(extTable || intTable);
-+    document.getElementById("exportGreeBtn").disabled=!hasUnits;
-+    document.getElementById("exportFuxaBtn").disabled=!hasUnits;
++    document.getElementById("exportEquipmentsBtn").disabled=!hasUnits;
++    document.getElementById("createFuxaViewBtn").disabled=!hasUnits;
 +
 +    if(!hasUnits) showError("Aucune unité détectée après le scan Gree");
 +}
@@ -72,28 +73,31 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..4e12816bd2468ede8bf2aa9c4841f54d
 +    }, {});
  }
  
- // Scan Modbus
+-// Scan Modbus
  async function scan(){
      try{
          clearError();
          container.innerHTML="";
 +        latestDetectedUnits = null;
-+        document.getElementById("exportGreeBtn").disabled=true;
-+        document.getElementById("exportFuxaBtn").disabled=true;
++        document.getElementById("exportEquipmentsBtn").disabled=true;
++        document.getElementById("createFuxaViewBtn").disabled=true;
 +
          const ip=document.getElementById("ip").value.trim();
          if(!ip) throw new Error("Veuillez saisir l'adresse IP de la passerelle Gree");
++
          const setIpResp = await fetch(`${API_BASE}/set-ip`,{
              method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ip})
          });
          if(!setIpResp.ok) throw new Error((await setIpResp.json()).error || "Erreur configuration IP");
++
          const scanResp = await fetch(`${API_BASE}/scan`);
          if(!scanResp.ok) throw new Error((await scanResp.json()).error || "Erreur scan Modbus");
++
          displayUnits(await scanResp.json());
      }catch(err){ showError(err.message); console.error(err);}
  }
  
- // Récupère les unités depuis le tableau
+-// Récupère les unités depuis le tableau
 -function getUnitsFromTable(){
 +function getUnitsFromTable({ fallbackNamesById = {} } = {}){
      const inputs=document.querySelectorAll("#unitsContainer input");
@@ -111,7 +115,7 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..4e12816bd2468ede8bf2aa9c4841f54d
      return { intUnits, extUnits };
  }
  
- // Export JSON Gree
+-// Export JSON Gree
  async function exportGreeJSON(intUnits, extUnits){
      const resp = await fetch("/plugins/gree/export",{
          method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({intUnits, extUnits})
@@ -121,10 +125,42 @@ index d5f5dc085e8ac879531bc5a1c7f7654561ced9e1..4e12816bd2468ede8bf2aa9c4841f54d
      downloadBlob(blob,"gree_fuxa.json");
  }
  
- // Export Vue FUXA
+-// Export Vue FUXA
  function exportFuxaJSON(intUnits, extUnits){
      const viewId = `v_${crypto.randomUUID()}`;
      const tableId = `OXC_${crypto.randomUUID()}`;
      const allUnits = [...intUnits,...extUnits];
++
      const rows = allUnits.map(u=>({
          cells:[
+             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:u.name},
+             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"Off"},
+             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"N/A"},
+             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"N/A"},
+             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"N/A"},
+             {id:`c_${crypto.randomUUID()}`, type:"variable", variableId:`t_${crypto.randomUUID()}`, label:"OK"}
+         ]
+     }));
+ 
+     const viewJson={
+         id:viewId,
+         name:"Tableau Equipements",
+         profile:{width:1920,height:1080,bkcolor:"#ffffffff",margin:10,align:"middleCenter",gridType:"fixed",viewRenderDelay:0},
+         items:{ [tableId]:{ id:tableId, type:"svg-ext-own_ctrl-table", name:"Equipements", property:{ id:null, type:"data", options:{ rows } }, events:[] } },
+         variables:{}, svgcontent:""
+     };
+ 
+     const blob = new Blob([JSON.stringify(viewJson,null,2)],{type:"application/json"});
+     downloadBlob(blob,"fuxa_view.json");
+ }
+ 
+-// Téléchargement utilitaire
+ function downloadBlob(blob,filename){
+     const url = window.URL.createObjectURL(blob);
+     const a = document.createElement("a");
+     a.href = url; a.download = filename;
+     document.body.appendChild(a);
+     a.click();
+     a.remove();
+     window.URL.revokeObjectURL(url);
+ }
