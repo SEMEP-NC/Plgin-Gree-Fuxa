@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Gree Modbus Plugin</title>
     <style>
-        /* Ton CSS existant ici... inchangé */
         :root { --primary: #1976d2; --primary-dark: #125aa0; --bg: #f5f7fa; --card: #ffffff; --border: #dcdfe6; --error: #b00020; }
         * { box-sizing: border-box; font-family: "Segoe UI", Roboto, Arial, sans-serif; }
         body { margin: 0; padding: 20px; background-color: var(--bg); color: #333; }
@@ -34,14 +33,12 @@
         <input id="ip" type="text" placeholder="IP passerelle Gree (ex: 10.0.0.50)">
         <button id="scanBtn">Scanner</button>
     </div>
-
     <div id="errorBox"></div>
 </div>
 
 <div class="card">
     <h3>Unités détectées</h3>
     <div id="unitsContainer"></div>
-
     <div class="actions">
         <button id="importBtn" disabled>
             Exporter JSON & Vue FUXA
@@ -51,7 +48,6 @@
 
 <script src="widget_gree.js"></script>
 <script>
-    // Liaisons boutons
     document.getElementById("scanBtn").addEventListener("click", scan);
     document.getElementById("importBtn").addEventListener("click", importAndExport);
 </script>
